@@ -1,0 +1,1 @@
+install.packages(c("shiny", "dplyr", "jsonlite", "echarts4r"), repos = "https://cran.rstudio.com/")
