@@ -1,11 +1,35 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import Status from '@/components/status/status.vue'
 import Login  from '@/components/login/login.vue'
+import SelectFiles from '@/components/download/SelectFiles.vue';
+import DownloadComponent from '@/components/download/DownloadComponent.vue';
+import { useMainStore } from '@/stores/mainStore';
 import bannerImg from '@/assets/suicide.png'
 
-const thisYear = new Date().getFullYear()
+const store = useMainStore();
+const isLoggedIn = computed(
+  () => store.status !== store.statusOptions.NONE,
+);
+
+const showSelectFiles = computed(() =>
+  [
+    store.statusOptions.LOGGED_IN,
+    store.statusOptions.FILES_SELECTED,
+    store.statusOptions.FILES_DOWNLOADED,
+  ].includes(store.status),
+);
+
+const showDownload = computed(() =>
+  [
+    store.statusOptions.FILES_SELECTED,
+    store.statusOptions.FILES_DOWNLOADED,
+  ].includes(store.status),
+);
 
 
+const bannerImgUrl = bannerImg as string;
+const thisYear     = new Date().getFullYear();
 </script>
 
 <template>
@@ -21,8 +45,7 @@ const thisYear = new Date().getFullYear()
     </nav>
 
 
-    <!-- ── HERO ── -->
-    <!-- ── BANNER IMAGE ── -->
+
      <section class="banner">
        <img :src="bannerImg" alt="Suicide Prevention Banner" />
      </section>
@@ -67,14 +90,21 @@ const thisYear = new Date().getFullYear()
       </div>
     </section>
 
-    <!-- Download Latest Reports-->
+     <!-- ── ADMIN FLOW ── -->
     <section class="outer admin">
       <h3>Download Latest Reports</h3>
 
       <Status class="admin-block" />
-      <Login  class="admin-block" />
 
-      <!-- single button block -->
+      <!-- 1️⃣  Login until authenticated -->
+      <Login v-if="!isLoggedIn" class="admin-block" />
+
+      <!-- 2️⃣  File picker stays visible while logged-in -->
+      <SelectFiles v-if="showSelectFiles" class="admin-block" />
+
+      <!-- 3️⃣  Download panel shows after at least one file is chosen -->
+      <DownloadComponent v-if="showDownload" class="admin-block" />
+
     </section>
 
     <!-- ── FOOTER ── -->

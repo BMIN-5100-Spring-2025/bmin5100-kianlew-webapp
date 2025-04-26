@@ -132,7 +132,6 @@ async function doConfirmLogin() {
       </button>
     </form>
 
-    <!-- NEW PASSWORD FORM -->
     <form
       v-else
       class="login-form"
@@ -154,7 +153,6 @@ async function doConfirmLogin() {
       </button>
     </form>
 
-    <!-- ERROR MESSAGE -->
     <p v-if="error" class="error-msg">{{ error }}</p>
   </div>
 </template>
