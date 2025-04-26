@@ -1,162 +1,176 @@
+<script setup lang="ts">
+import Status from '@/components/status/status.vue'
+import Login  from '@/components/login/login.vue'
+import bannerImg from '@/assets/suicide.png'
+
+const thisYear = new Date().getFullYear()
+
+
+</script>
+
 <template>
   <div class="dashboard">
-    <h1>Data Analytics Dashboard</h1>
-    <div class="filters">
-      <Dropdown
-        label="Age Group (CATAG6)"
-        :options="catag6Options"
-        v-model="filters.CATAG6"
-        @update:value="updateFilters"
-      />
-      <Dropdown
-        label="Sex (IRSEX)"
-        :options="irsexOptions"
-        v-model="filters.IRSEX"
-        @update:value="updateFilters"
-      />
-      <Dropdown
-        label="Race (NEWRACE2)"
-        :options="newrace2Options"
-        v-model="filters.NEWRACE2"
-        @update:value="updateFilters"
-      />
-      <Dropdown
-        label="Education (EDUHIGHCAT)"
-        :options="eduhighcatOptions"
-        v-model="filters.EDUHIGHCAT"
-        @update:value="updateFilters"
-      />
-      <Dropdown
-        label="Year (YEAR)"
-        :options="yearOptions"
-        v-model="filters.YEAR"
-        @update:value="updateFilters"
-      />
-      <Dropdown
-        label="Intention"
-        :options="intentionOptions"
-        v-model="filters.Intention"
-        @update:value="updateFilters"
-      />
-      <Dropdown
-        label="Reasons"
-        :options="reasonsOptions"
-        v-model="filters.REASONS"
-        @update:value="updateFilters"
-      />
-    </div>
-    <Chart :data="chartData" />
+    <!-- ── NAVBAR ── -->
+    <nav class="main-nav">
+      <ul class="nav-links">
+        <li><a href="#">Solutions</a></li>
+        <li><a href="#">Training</a></li>
+        <li><a href="#">Resources</a></li>
+        <li><a href="#">About Us</a></li>
+      </ul>
+    </nav>
+
+
+    <!-- ── HERO ── -->
+    <!-- ── BANNER IMAGE ── -->
+     <section class="banner">
+       <img :src="bannerImg" alt="Suicide Prevention Banner" />
+     </section>
+
+    <!-- ── RESOURCE CARDS ── -->
+    <section class="outer">
+      <div class="card-row">
+        <article class="card">
+          <h3>Safety Resources</h3>
+          <p>In case of emergency, dial 911 or 222 - 684 - 5944</p>
+        </article>
+
+        <article class="card">
+          <h3>Psychological Resources</h3>
+          <p>Links to counselling, psychological support services.</p>
+        </article>
+
+        <article class="card">
+          <h3>Educational Resources</h3>
+          <p>Access training material and prevention tool-kits.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- ── INFO STRIPS ── -->
+    <section class="outer">
+      <div class="info-row">
+        <article class="info primary">
+          <h4>What is suicide?</h4>
+          <p>Suicide is the act of intentionally causing one's own death through self-directed injurious behavior with the intent to die.</p>
+        </article>
+
+        <article class="info danger">
+          <h4>Types</h4>
+          <p>Include completed suicide (fatal self-harm with intent to die), attempted suicide (non-fatal self-harm with intent to die), and suicidal ideation (thoughts or plans without action)..</p>
+        </article>
+
+        <article class="info success">
+          <h4>Seek Help!</h4>
+          <p>If you or someone you know is affected, confidential help is available 24/7. You are not alone!.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Download Latest Reports-->
+    <section class="outer admin">
+      <h3>Download Latest Reports</h3>
+
+      <Status class="admin-block" />
+      <Login  class="admin-block" />
+
+      <!-- single button block -->
+    </section>
+
+    <!-- ── FOOTER ── -->
+    <footer>
+      <span>&copy; {{ thisYear }} Copyright </span>
+      <span>All Rights Reserved </span>
+    </footer>
   </div>
 </template>
 
-<script>
-import axios from 'axios';
-import Dropdown from './Dropdown.vue';
-import Chart from './Chart.vue';
-
-export default {
-  name: 'Dashboard',
-  components: {
-    Dropdown,
-    Chart,
-  },
-  data() {
-    return {
-      filters: {
-        CATAG6: '',
-        IRSEX: '',
-        NEWRACE2: '',
-        EDUHIGHCAT: '',
-        YEAR: '',
-        Intention: '',
-        REASONS: '',
-      },
-      chartData: [],
-      catag6Options: [
-        { value: '2', label: '18-25' },
-        { value: '3', label: '26-34' },
-        { value: '4', label: '35-49' },
-        { value: '5', label: '50+' },
-      ],
-      irsexOptions: [
-        { value: '1', label: 'Male' },
-        { value: '2', label: 'Female' },
-      ],
-      newrace2Options: [
-        { value: '1', label: 'White' },
-        { value: '2', label: 'Black/African American' },
-        { value: '3', label: 'Native American' },
-        { value: '4', label: 'Native Hawaiian/Pacific Islander' },
-        { value: '5', label: 'Asian' },
-        { value: '6', label: 'More than one race' },
-        { value: '7', label: 'Hispanic' },
-      ],
-      eduhighcatOptions: [
-        { value: '1', label: 'Less than high school' },
-        { value: '2', label: 'High school graduate' },
-        { value: '3', label: 'Some college' },
-        { value: '4', label: 'College graduate' },
-      ],
-      yearOptions: Array.from({ length: 2023 - 2015 + 1 }, (_, i) => ({
-        value: (2015 + i).toString(),
-        label: (2015 + i).toString(),
-      })),
-      intentionOptions: [
-        { value: 'IRSUICTHNK', label: 'Thought of Suicide' },
-        { value: 'IRSUITRYYR', label: 'Tried Suicide' },
-        { value: 'IRSUIPLANYR', label: 'Planned Suicide' },
-      ],
-      reasonsOptions: [
-        { value: 'MHNTENFCV', label: 'Enough Coverage' },
-        { value: 'MHNTFFLKE', label: 'Felt Like It' },
-        { value: 'MHNTPROBS', label: 'Problems' },
-        { value: 'MHNTTIME', label: 'Time' },
-        { value: 'MHNTINSCV', label: 'Insurance Coverage' },
-        { value: 'MHNTWHER', label: 'Where to Go' },
-        { value: 'MHNTNOHLP', label: 'No Help Needed' },
-        { value: 'MHNTCOST', label: 'Cost' },
-        { value: 'MHNTHNDL', label: 'Handle on Own' },
-        { value: 'MHNTFORCE', label: 'Forced' },
-        { value: 'MHNTCONSQ', label: 'Consequences' },
-        { value: 'MHNTPRIV', label: 'Privacy' },
-        { value: 'MHNTPTHNK', label: 'Others Think' },
-      ],
-    };
-  },
-  methods: {
-    // src/components/Dashboard.vue (snippet of updateFilters method)
-    async updateFilters() {
-      // Build query string from filters
-      const query = Object.entries(this.filters)
-        .filter(([_, value]) => value !== '')
-        .map(([key, value]) => `${key}=${value}`)
-        .join('&');
-
-      try {
-        // Fetch data from the Shiny API
-        const response = await axios.get(`http://localhost:8000?${query}`);
-        this.chartData = response.data;
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        this.chartData = [];
-      }
-    }
-  },
-  mounted() {
-    // Fetch initial data
-    this.updateFilters();
-  },
-};
-</script>
-
+<!-- ──────────  scoped styles  ────────── -->
 <style scoped>
-.dashboard {
-  padding: 20px;
+*{box-sizing:border-box;margin:0;padding:0}
+ul{list-style:none}
+button{border:0;background:none;cursor:pointer}
+input,button,textarea,select{font:inherit}
+
+/* colours */
+:root{
+  --blue-900:#0d1a7f; --blue-100:#e7efff; --grey-100:#f8f8f8;
+  --danger:#d73737;   --success:#2e9e4f;
 }
-.filters {
+
+/* responsive base font */
+html{font-size:clamp(110px,3.9vw+1.2rem,120px)}
+
+/* wrapper */
+.dashboard{
+  min-height:100vh;width:100%;
+  display:left;flex-direction:column;background:#fff;color:#212529;
+  font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif
+}
+
+
+/* NAVBAR */
+.main-nav{
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;
+  padding:2.1rem 2.1 rem;gap:3.1rem
+}
+.brand{font-weight:1000}
+.nav-links{display:flex;gap:3.1rem;flex-wrap:wrap;font-size:1.35rem}
+.nav-links a{color:var(--blue-900);text-decoration:none}
+
+/* HERO */
+.hero{background:var(--blue-900);color:#fff;padding:0.1rem 2rem}
+.hero h2{font-size:1.45rem;max-width:50rem;line-height:0.34;margin:0}
+.date-label{color:var(--blue-100)}
+.cta{margin-top:0 rem;display:inline-grid ;gap:1rem;justify-content:space-evenly}
+.btn-primary{background:#fff;color:var(--blue-900);padding:.15rem 1.3rem;border-radius:1px;font-weight:800}
+.btn-outline{border:2px solid #fff;color:#fff;padding:.3rem 1 .2rem;border-radius:4px;font-weight:600}
+
+/* OUTER – full width with 1 cm left margin */
+.outer{width:calc(80vw - 8cm);margin-left:0;padding:0rem}
+/* GRID rows */
+.card-row,.info-row{
+  display:grid;gap:2rem;
+  grid-template-columns:repeat(auto-fit,minmax(350px,1fr));
+  padding:1.2rem 0
+}
+
+/* cards */
+.card{border:1px solid #d0d0d0;border-radius:4px;padding:0.9rem;background:#fff}
+.card h3{font-size:1.52rem;margin-bottom:.2rem}
+
+/* strips */
+.info{padding:1rem;border-left:6px solid;background:var(--grey-100);border-radius:4px}
+.info h4{margin-bottom:.25rem;font-size:1.55rem}
+.info.primary{border-color:var(--blue-900)}
+.info.danger {border-color:var(--danger)}
+.info.success{border-color:var(--success)}
+
+/* admin */
+.admin{padding:0.2rem 0;border-top:1px solid #d0d0d0;display:flex;flex-direction:column;gap:.1rem}
+.admin h3{font-size:1.28rem;font-weight:600}
+.admin-block{border:1px solid #d0d0d0;padding:0.9rem;border-radius:4px}
+
+/* download button style */
+.btn-container{display:flex;justify-content:center}
+.btn-download{
+  background:var(--blue-900);color:#fff;font-weight:600;
+  padding:.45rem 0.6rem;border-radius:4px
+}
+
+/* footer */
+footer {
+  margin-top: 0.1rem;
+  padding: 0.1rem 0.25rem;
+  background: #f1f1f1;
+  font-size: .85rem;
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
-  margin-bottom: 20px;
+  gap: .1rem;
+  justify-content: center;
 }
+
 </style>
+
+<!-- keep background white -->
+<style>html,body{background:#fff}</style>

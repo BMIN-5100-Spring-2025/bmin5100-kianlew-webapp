@@ -1,100 +1,181 @@
-<script setup>
-import { signIn, confirmSignIn, signOut, fetchAuthSession } from 'aws-amplify/auth'
-import { ref } from 'vue'
-import { useMainStore } from '@/stores/mainStore'
+<script setup lang="ts">
+import {
+  signIn,
+  confirmSignIn,
+  signOut,
+  fetchAuthSession,
+} from 'aws-amplify/auth';
+import { ref } from 'vue';
+import { useMainStore } from '@/stores/mainStore';
 
-const store = useMainStore()
+/**
+ * Pinia store – exposes `status` and `statusOptions`
+ */
+const store = useMainStore();
 
-const input = ref({username:"", password:""})
+interface Credentials {
+  username: string;
+  password: string;
+}
 
-const state = ref("LOGIN")
+
+const credentials = ref<Credentials>({ username: '', password: '' });
+// LOGIN ➜ user must enter credentials
+// NEW_PASSWORD ➜ user has to set a new password (Cognito challenge)
+const state = ref<'LOGIN' | 'NEW_PASSWORD'>('LOGIN');
+const loading = ref(false);
+const error = ref<string | null>(null);
+
 
 async function doLogin() {
+  loading.value = true;
+  error.value = null;
 
-  // We always try to sign out before signing back in.
-  // This is a simple (and probably inefficient way) to
-  // ensure we don't get an error if there already is a
-  // logged in user.
-  await signOut()
+  try {
+    // 1️⃣ Ensure we start with a clean session
+    await signOut();
 
-  // Login with Cognito --> expect to return token
-  const response = await signIn({
-    username: input.value.username,
-    password: input.value.password,
-    options: {
-      authFlowType: "USER_PASSWORD_AUTH",
-    },
-  })
+    // 2️⃣ Attempt Sign‑In
+    const res = await signIn({
+      username: credentials.value.username.trim(),
+      password: credentials.value.password,
+      options: { authFlowType: 'USER_PASSWORD_AUTH' },
+    });
 
-  // Check that response has a next-step of DONE
-  switch (response.nextStep.signInStep) {
-    case "CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED":
-      state.value = "NEW_PASSWORD"
-    break;
-    case "DONE":
-      const session = await fetchAuthSession();
-      const token = session?.tokens?.accessToken.toString();
+    switch (res.nextStep.signInStep) {
+      case 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED':
+        state.value = 'NEW_PASSWORD';
+        break;
 
-      store.status = store.statusOptions.LOGGED_IN
-      console.log(token)
+      case 'DONE': {
+        const session = await fetchAuthSession();
+        const token = session?.tokens?.accessToken?.toString();
 
-      break;
+        if (token) {
+          store.status = store.statusOptions.LOGGED_IN;
+          console.info('[Auth] Access token:', token);
+        }
+
+        // housekeeping
+        credentials.value.password = '';
+        break;
+      }
+
+      default:
+        error.value = 'Unexpected authentication step. Please try again.';
+    }
+  } catch (e: any) {
+    error.value = e.message || 'Login failed. Please check your credentials.';
+  } finally {
+    loading.value = false;
   }
-
 }
 
 async function doConfirmLogin() {
-  const response = await confirmSignIn({
-    challengeResponse: input.value.password,
-  })
+  loading.value = true;
+  error.value = null;
 
-  // Check that response has a next-step of DONE
-  switch (response.nextStep.signInStep) {
-    case "DONE":
+  try {
+    const res = await confirmSignIn({
+      challengeResponse: credentials.value.password,
+    });
+
+    if (res.nextStep.signInStep === 'DONE') {
       const session = await fetchAuthSession();
-      const token = session?.tokens?.accessToken.toString();
-      state.value = "LOGIN"
+      const token = session?.tokens?.accessToken?.toString();
 
-      store.status = store.statusOptions.LOGGED_IN
-      console.log(token)
+      if (token) {
+        store.status = store.statusOptions.LOGGED_IN;
+        console.info('[Auth] Access token:', token);
+      }
 
-      break;
+      // Reset back to login state
+      state.value = 'LOGIN';
+      credentials.value.password = '';
+    }
+  } catch (e: any) {
+    error.value = e.message || 'Unable to update password.';
+  } finally {
+    loading.value = false;
   }
 }
-
 </script>
 
 <template>
   <div class="login-wrapper">
-    <form v-if="state==='LOGIN'" name="login-form" >
-      <div  class="mb-3">
-        <label for="username">Username: </label>
-        <input type="text" id="username" v-model="input.username" />
-      </div>
+    <!-- LOGIN FORM -->
+    <form v-if="state === 'LOGIN'" class="login-form" @submit.prevent="doLogin">
       <div class="mb-3">
-        <label for="password">Password: </label>
-        <input type="password" id="password" v-model="input.password" />
+        <label for="username">Username:</label>
+        <input
+          v-model="credentials.username"
+          id="username"
+          type="text"
+          autocomplete="username"
+          required
+        />
       </div>
-      <button class="btn btn-outline-dark" type="submit" @click.prevent = "doLogin()">
-        Login
+
+      <div class="mb-3">
+        <label for="password">Password:</label>
+        <input
+          v-model="credentials.password"
+          id="password"
+          type="password"
+          autocomplete="current-password"
+          required
+        />
+      </div>
+
+      <button class="btn btn-outline-dark" type="submit" :disabled="loading">
+        {{ loading ? 'Logging in…' : 'Login' }}
       </button>
     </form>
-    <form v-if="state==='NEW_PASSWORD'" name="login-form" >
+
+    <!-- NEW PASSWORD FORM -->
+    <form
+      v-else
+      class="login-form"
+      @submit.prevent="doConfirmLogin"
+    >
       <div class="mb-3">
-        <label for="password">New Password: </label>
-        <input type="password" id="password" v-model="input.password" />
+        <label for="newPassword">New Password:</label>
+        <input
+          v-model="credentials.password"
+          id="newPassword"
+          type="password"
+          autocomplete="new-password"
+          required
+        />
       </div>
-      <button class="btn btn-outline-dark" type="submit" @click.prevent = "doConfirmLogin()">
-        Update Password
+
+      <button class="btn btn-outline-dark" type="submit" :disabled="loading">
+        {{ loading ? 'Updating…' : 'Update Password' }}
       </button>
     </form>
+
+    <!-- ERROR MESSAGE -->
+    <p v-if="error" class="error-msg">{{ error }}</p>
   </div>
 </template>
 
 <style scoped>
 .login-wrapper {
-  border: 1px solid black;
-  padding: 8px;
-  margin: 8px 0;
+  border: 1px solid #d0d0d0;
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 1px;
+}
+
+.mb-3 {
+  margin-bottom: 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.error-msg {
+  color: var(--danger, #d73737);
+  margin-top: 0.75rem;
 }
 </style>
